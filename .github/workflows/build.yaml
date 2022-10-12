@@ -1,0 +1,53 @@
+name: build and deploy
+on:
+  push:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
+        with:
+          extra_nix_config: |
+            system-features = nixos-test benchmark big-parallel kvm
+            extra-substituters = https://anmonteiro.nix-cache.workers.dev
+            extra-trusted-public-keys = ocaml.nix-cache.com-1:/xI2h2+56rwFfKyyFVbkJSeGqSIYMC/Je+7XXqGKDIY=
+
+      - name: Build default
+        run: nix --log-format raw -L build '.#'
+      - name: Build container
+        run: nix --log-format raw -L build '.#docker'
+      - name: Copy to docker
+        run: nix --log-format raw -L run '.#docker.copyToDockerDaemon' 
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+          
+      - name: Set outputs
+        id: vars
+        run: |
+          echo "::set-output name=date::$(date +%Y-%m-%dT%H-%M-%S)"
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Re-tag image"
+        run: |
+          docker image tag ghcr.io/marigold-dev/ligo-deku-rpc:latest
+          docker image tag ghcr.io/marigold-dev/ligo-deku-rpc:${{ github.sha }}
+          docker image tag ghcr.io/marigold-dev/ligo-deku-rpc:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
+          
+      - name: "Push image"
+        if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        run: |
+          docker image push ghcr.io/marigold-dev/ligo-deku-rpc:latest
+          docker image push ghcr.io/marigold-dev/ligo-deku-rpc:${{ github.sha }}
+          docker image push ghcr.io/marigold-dev/ligo-deku-rpc:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release

@@ -10,6 +10,11 @@
     nixpkgs.url = "github:nix-ocaml/nix-overlays";
     nix-filter.url = "github:numtide/nix-filter";
     flake-utils.url = "github:numtide/flake-utils";
+    nix2container.url = "github:nlewo/nix2container";
+    nix2container.inputs = {
+      nixpkgs.follows = "nixpkgs";
+      flake-utils.follows = "flake-utils";
+    };
 
     tezos.url = "github:marigold-dev/tezos-nix";
     tezos.inputs = {
@@ -31,6 +36,7 @@
     nixpkgs,
     flake-utils,
     nix-filter,
+    nix2container,
     tezos,
     tuna,
     ligo,
@@ -79,6 +85,7 @@
           });
         })
       ];
+      nix2containerPkgs = nix2container.packages.${system};
     in {
       packages = {
         default = pkgs.ocamlPackages.callPackage ./nix {
@@ -87,6 +94,7 @@
           ligo = ligo.packages.${system}.ligoLight;
         };
         docker = pkgs.callPackage ./nix/docker.nix {
+          inherit nix2containerPkgs;
           ligo-deku-rpc = self.packages.${system}.default;
           tunac = tuna.packages.${system}.tuna;
           ligo = ligo.packages.${system}.ligoLight;

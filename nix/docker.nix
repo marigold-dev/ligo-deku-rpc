@@ -1,18 +1,17 @@
 {
   pkgs,
+  nix2containerPkgs,
   ligo-deku-rpc,
   tunac,
   ligo,
 }:
-pkgs.dockerTools.buildImage rec {
-  name = "ligo-deku-rpc";
+nix2containerPkgs.nix2container.buildImage rec {
+  name = "ghcr.io/marigold-dev/ligo-deku-rpc";
+  tag = "latest";
 
   copyToRoot = pkgs.buildEnv {
     name = "image-root";
-    paths = [
-      tunac
-      ligo
-    ];
+    paths = [ tunac ligo ];
     pathsToLink = ["/bin"];
   };
 
