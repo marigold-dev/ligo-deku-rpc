@@ -1,0 +1,6 @@
+_build
+result
+
+*.mligo
+*.tz
+*.wat
