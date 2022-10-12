@@ -11,7 +11,12 @@ nix2containerPkgs.nix2container.buildImage rec {
 
   copyToRoot = pkgs.buildEnv {
     name = "image-root";
-    paths = [ tunac ligo ];
+    paths = [
+      tunac
+      ligo 
+      pkgs.coreutils
+      pkgs.dockerTools.fakeNss
+    ];
     pathsToLink = ["/bin"];
   };
 
