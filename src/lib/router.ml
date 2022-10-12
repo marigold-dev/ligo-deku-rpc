@@ -87,4 +87,8 @@ let to_wasm ~env () =
   in
   Routes.((s "api" / s "v1" / s "ligo" / s "originate" /? nil) @--> handler)
 
-let router ~env () = Routes.one_of [ to_wasm ~env () ]
+let healthz () =
+  let handler _ = Piaf.Response.create `OK in
+  Routes.((s "/health" /? nil) @--> handler)
+
+let router ~env () = Routes.one_of [ to_wasm ~env (); healthz () ]
