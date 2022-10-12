@@ -41,9 +41,8 @@ jobs:
 
       - name: "Re-tag image"
         run: |
-          docker image tag ghcr.io/marigold-dev/ligo-deku-rpc:latest
-          docker image tag ghcr.io/marigold-dev/ligo-deku-rpc:${{ github.sha }}
-          docker image tag ghcr.io/marigold-dev/ligo-deku-rpc:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
+          docker image tag ghcr.io/marigold-dev/ligo-deku-rpc:latest ghcr.io/marigold-dev/ligo-deku-rpc:${{ github.sha }}
+          docker image tag ghcr.io/marigold-dev/ligo-deku-rpc:latest ghcr.io/marigold-dev/ligo-deku-rpc:${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha_short }}-release
           
       - name: "Push image"
         if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
