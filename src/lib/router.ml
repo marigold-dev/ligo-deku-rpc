@@ -68,14 +68,21 @@ let to_wasm ~env () =
     let filename_wasm = Printf.sprintf "%s.wat" hash in
     let mligo_path = Eio.Path.(Eio.Stdenv.cwd env / filename_mligo) in
     let wasm_path = Eio.Path.(Eio.Stdenv.cwd env / filename_wasm) in
-    let () =
-      try Eio.Path.save ~create:(`Exclusive 0o600) mligo_path source
-      with _ -> ()
-    in
-    let () = ligo_to_tz ~env ~hash ~lang () in
-    let () = tz_to_wasm ~env ~hash ~storage () in
+    let data = try Some (Eio.Path.load wasm_path) with _ -> None in
 
-    let wasm = Eio.Path.load wasm_path in
+    let wasm =
+      match data with
+      | None ->
+          let () =
+            try Eio.Path.save ~create:(`Exclusive 0o600) mligo_path source
+            with _ -> ()
+          in
+          let () = ligo_to_tz ~env ~hash ~lang () in
+          let () = tz_to_wasm ~env ~hash ~storage () in
+
+          Eio.Path.load wasm_path
+      | Some wasm -> wasm
+    in
     let body = Ok (Piaf.Body.of_string wasm) in
 
     match body with
@@ -88,9 +95,7 @@ let to_wasm ~env () =
   Routes.((s "api" / s "v1" / s "ligo" / s "originate" /? nil) @--> handler)
 
 let healthz () =
-  let handler _ =
-    Piaf.Response.create ~body:(Piaf.Body.of_string "ok") `OK
-  in
+  let handler _ = Piaf.Response.create ~body:(Piaf.Body.of_string "ok") `OK in
   Routes.((s "health" /? nil) @--> handler)
 
 let router ~env () = Routes.one_of [ to_wasm ~env (); healthz () ]
