@@ -16,6 +16,8 @@ nix2containerPkgs.nix2container.buildImage rec {
       ligo 
       pkgs.coreutils
       pkgs.dockerTools.fakeNss
+      pkgs.bash
+      pkgs.unixtools.netstat
     ];
     pathsToLink = ["/bin"];
   };
