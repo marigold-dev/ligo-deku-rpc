@@ -1,9 +1,12 @@
 open Eio.Std
 open Piaf
 
-let request_handler ~env req =
+let request_handler ~env =
+  let router = Ligo_deku_rpc.Router.router ~env () in
+  fun req ->
   let { Server.ctx = _; request } = req in
-  Routes.match' (Ligo_deku_rpc.Router.router ~env ()) ~target:request.target
+  Logs.debug (fun m -> m "Request to %s" request.target);
+  Routes.match' router  ~target:request.target
   |> function
   | Routes.NoMatch -> Piaf.Response.create `Not_found
   | FullMatch handler | MatchWithTrailingSlash handler -> handler req
