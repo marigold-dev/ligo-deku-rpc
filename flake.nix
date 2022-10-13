@@ -97,7 +97,7 @@
           inherit nix2containerPkgs;
           ligo-deku-rpc = self.packages.${system}.default;
           tunac = tuna.packages.${system}.tuna;
-          ligo = ligo.packages.${system}.ligoLight;
+          ligoLight = ligo.packages.${system}.ligoLight;
         };
       };
 

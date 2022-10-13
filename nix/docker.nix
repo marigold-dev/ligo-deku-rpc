@@ -3,7 +3,7 @@
   nix2containerPkgs,
   ligo-deku-rpc,
   tunac,
-  ligo,
+  ligoLight,
 }:
 nix2containerPkgs.nix2container.buildImage rec {
   name = "ghcr.io/marigold-dev/ligo-deku-rpc";
@@ -13,7 +13,7 @@ nix2containerPkgs.nix2container.buildImage rec {
     name = "image-root";
     paths = [
       tunac
-      ligo 
+      ligoLight 
       pkgs.coreutils
       pkgs.dockerTools.fakeNss
       pkgs.bash
