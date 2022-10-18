@@ -4,12 +4,11 @@ open Piaf
 let request_handler ~env =
   let router = Ligo_deku_rpc.Router.router ~env () in
   fun req ->
-  let { Server.ctx = _; request } = req in
-  Logs.debug (fun m -> m "Request to %s" request.target);
-  Routes.match' router  ~target:request.target
-  |> function
-  | Routes.NoMatch -> Piaf.Response.create `Not_found
-  | FullMatch handler | MatchWithTrailingSlash handler -> handler req
+    let { Server.ctx = _; request } = req in
+    Logs.debug (fun m -> m "Request to %s" request.target);
+    Routes.match' router ~target:request.target |> function
+    | Routes.NoMatch -> Piaf.Response.create `Not_found
+    | FullMatch handler | MatchWithTrailingSlash handler -> handler req
 
 let main port =
   let config = Server.Config.create port in
@@ -30,8 +29,8 @@ let setup_log ?style_renderer level =
 
 let () =
   setup_log Logs.Info;
-  let port = ref 8080 in
+  let port = ref 9090 in
   Arg.parse
-    [ ("-p", Arg.Set_int port, " Listening port number (8080 by default)") ]
+    [ ("-p", Arg.Set_int port, " Listening port number (9090 by default)") ]
     ignore "Echoes POST requests. Runs forever.";
   main !port
