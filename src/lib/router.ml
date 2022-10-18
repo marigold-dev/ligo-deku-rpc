@@ -65,10 +65,12 @@ let to_wasm ~env () =
 
     let hash = Hash.make source in
     let filename_mligo = Printf.sprintf "%s.mligo" hash in
+    let filename_tz = Printf.sprintf "%s.tz" hash in
     let filename_wasm = Printf.sprintf "%s.wat" hash in
     let mligo_path = Eio.Path.(Eio.Stdenv.cwd env / filename_mligo) in
+    let tz_path = Eio.Path.(Eio.Stdenv.cwd env / filename_tz) in
     let wasm_path = Eio.Path.(Eio.Stdenv.cwd env / filename_wasm) in
-    let data = try Some (Eio.Path.load wasm_path) with _ -> None in
+    let data = try Some (Eio.Path.load tz_path) with _ -> None in
 
     let wasm =
       match data with
@@ -79,10 +81,16 @@ let to_wasm ~env () =
           in
           let () = ligo_to_tz ~env ~hash ~lang () in
           let () = tz_to_wasm ~env ~hash ~storage () in
-
-          Eio.Path.load wasm_path
-      | Some wasm -> wasm
+          let wasm = Eio.Path.load wasm_path in
+          Eio.Path.unlink wasm_path;
+          wasm
+      | Some _tz ->
+          let () = tz_to_wasm ~env ~hash ~storage () in
+          let wasm = Eio.Path.load wasm_path in
+          Eio.Path.unlink wasm_path;
+          wasm
     in
+
     let body = Ok (Piaf.Body.of_string wasm) in
 
     match body with
