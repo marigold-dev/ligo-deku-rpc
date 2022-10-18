@@ -2,12 +2,12 @@ open Piaf
 
 let ligo_to_tz ~env ~hash ~lang () =
   Eio.Switch.run @@ fun sw ->
-  let filename_mligo = Printf.sprintf "%s.mligo" hash in
+  let filename_ligo = Printf.sprintf "%s.%s" hash lang in
   let filename_tz = Printf.sprintf "%s.tz" hash in
-  Logs.info (fun m -> m "compiling %s with syntax %s" filename_mligo lang);
+  Logs.info (fun m -> m "compiling %s with syntax %s" filename_ligo lang);
   let stdout =
     Unix.open_process_args_in "ligo"
-      [| "ligo"; "compile"; "contract"; "--syntax"; lang; filename_mligo |]
+      [| "ligo"; "compile"; "contract"; "--syntax"; lang; filename_ligo |]
   in
   let descr = Unix.descr_of_in_channel stdout in
   let source =
@@ -64,19 +64,19 @@ let to_wasm ~env () =
     in
 
     let hash = Hash.make source in
-    let filename_mligo = Printf.sprintf "%s.mligo" hash in
+    let filename_ligo = Printf.sprintf "%s.%s" hash lang in
     let filename_tz = Printf.sprintf "%s.tz" hash in
     let filename_wasm = Printf.sprintf "%s.wat" hash in
-    let mligo_path = Eio.Path.(Eio.Stdenv.cwd env / filename_mligo) in
-    let tz_path = Eio.Path.(Eio.Stdenv.cwd env / filename_tz) in
+    let ligo_path = Eio.Path.(Eio.Stdenv.cwd env / filename_ligo) in
     let wasm_path = Eio.Path.(Eio.Stdenv.cwd env / filename_wasm) in
+    let tz_path = Eio.Path.(Eio.Stdenv.cwd env / filename_tz) in
     let data = try Some (Eio.Path.load tz_path) with _ -> None in
 
     let wasm =
       match data with
       | None ->
           let () =
-            try Eio.Path.save ~create:(`Exclusive 0o600) mligo_path source
+            try Eio.Path.save ~create:(`Exclusive 0o600) ligo_path source
             with _ -> ()
           in
           let () = ligo_to_tz ~env ~hash ~lang () in
