@@ -4,3 +4,5 @@ result
 *.mligo
 *.tz
 *.wat
+
+.direnv
