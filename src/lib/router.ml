@@ -64,13 +64,15 @@ let to_wasm ~env () =
     let filename_tz = Printf.sprintf "%s.tz" hash in
     let filename_wasm = Printf.sprintf "%s.wat" hash in
     let ligo_path = Eio.Path.(Eio.Stdenv.cwd env / filename_ligo) in
-    let wasm_path = Eio.Path.(Eio.Stdenv.cwd env / filename_wasm) in
     let tz_path = Eio.Path.(Eio.Stdenv.cwd env / filename_tz) in
-    let data = try Some (Eio.Path.load tz_path) with _ -> None in
+    let wasm_path = Eio.Path.(Eio.Stdenv.cwd env / filename_wasm) in
+    let tz_already_exists =
+      try Some (Eio.Path.load tz_path) |> Option.is_some with _ -> false
+    in
 
     let wasm =
-      match data with
-      | None ->
+      match tz_already_exists with
+      | false ->
           let () =
             try Eio.Path.save ~create:(`Exclusive 0o600) ligo_path source
             with _ -> ()
@@ -80,8 +82,8 @@ let to_wasm ~env () =
           let wasm = Eio.Path.load wasm_path in
           Eio.Path.unlink wasm_path;
           wasm
-      | Some _tz ->
-          let () = tz_to_wasm ~env ~hash ~storage () in
+      | true ->
+          let () = tz_to_wasm ~env ~storage ~filename_tz ~filename_wasm () in
           let wasm = Eio.Path.load wasm_path in
           Eio.Path.unlink wasm_path;
           wasm
