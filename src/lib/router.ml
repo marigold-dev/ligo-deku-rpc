@@ -1,9 +1,7 @@
 open Piaf
 
-let ligo_to_tz ~env ~hash ~lang () =
+let ligo_to_tz ~env ~lang ~filename_ligo ~filename_tz () =
   Eio.Switch.run @@ fun sw ->
-  let filename_ligo = Printf.sprintf "%s.%s" hash lang in
-  let filename_tz = Printf.sprintf "%s.tz" hash in
   Logs.info (fun m -> m "compiling %s with syntax %s" filename_ligo lang);
   let stdout =
     Unix.open_process_args_in "ligo"
@@ -20,10 +18,8 @@ let ligo_to_tz ~env ~hash ~lang () =
   in
   Eio.Flow.copy source sink
 
-let tz_to_wasm ~env ~hash ~storage () =
+let tz_to_wasm ~env ~storage ~filename_tz ~filename_wasm () =
   Eio.Switch.run @@ fun sw ->
-  let filename_tz = Printf.sprintf "%s.tz" hash in
-  let filename_wasm = Printf.sprintf "%s.wat" hash in
   let stdout =
     Unix.open_process_args_in "tunac"
       [| "tunac"; "originate"; filename_tz; storage |]
@@ -79,8 +75,8 @@ let to_wasm ~env () =
             try Eio.Path.save ~create:(`Exclusive 0o600) ligo_path source
             with _ -> ()
           in
-          let () = ligo_to_tz ~env ~hash ~lang () in
-          let () = tz_to_wasm ~env ~hash ~storage () in
+          let () = ligo_to_tz ~env ~lang ~filename_ligo ~filename_tz () in
+          let () = tz_to_wasm ~env ~storage ~filename_tz ~filename_wasm () in
           let wasm = Eio.Path.load wasm_path in
           Eio.Path.unlink wasm_path;
           wasm
