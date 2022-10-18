@@ -2,6 +2,7 @@ _build
 result
 
 *.mligo
+*.jsligo
 *.tz
 *.wat
 
