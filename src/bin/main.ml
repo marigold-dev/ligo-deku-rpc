@@ -1,8 +1,9 @@
 open Eio.Std
 open Piaf
+open Ligo_deku_rpc
 
 let request_handler ~env =
-  let router = Ligo_deku_rpc.Router.router ~env () in
+  let router = Router.router ~env () in
   fun req ->
     let { Server.ctx = _; request } = req in
     Logs.debug (fun m -> m "Request to %s" request.target);
@@ -14,7 +15,10 @@ let main port =
   let config = Server.Config.create port in
   Eio_main.run (fun env ->
       Switch.run (fun sw ->
-          let server = Server.create ~config (request_handler ~env) in
+          let server =
+            Server.create ~config
+              (Middlewares.cors_middleware @@ request_handler ~env)
+          in
           let _command =
             Server.Command.start ~bind_to_address:Eio.Net.Ipaddr.V4.any ~sw env
               server
