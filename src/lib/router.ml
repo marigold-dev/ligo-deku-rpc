@@ -18,23 +18,6 @@ let ligo_to_tz ~env ~lang ~filename_ligo ~filename_tz () =
   in
   Eio.Flow.copy source sink
 
-let tz_to_wasm ~env ~storage ~filename_tz ~filename_wasm () =
-  Eio.Switch.run @@ fun sw ->
-  let stdout =
-    Unix.open_process_args_in "tunac"
-      [| "tunac"; "originate"; filename_tz; storage |]
-  in
-  let descr = Unix.descr_of_in_channel stdout in
-  let source =
-    (Eio_unix.FD.as_socket ~sw ~close_unix:true descr :> Eio.Flow.source)
-  in
-  Eio_unix.await_readable descr;
-  let sink =
-    Eio.Path.open_out ~sw ~append:false ~create:(`Exclusive 0o600)
-      Eio.Path.(Eio.Stdenv.cwd env / filename_wasm)
-  in
-  Eio.Flow.copy source sink
-
 let to_wasm ~env () =
   let handler { Server.ctx = _; request } =
     let json =
@@ -52,25 +35,17 @@ let to_wasm ~env () =
         json
       |> Result.get_ok
     in
-    let storage =
-      Result.map
-        (fun json -> Yojson.Safe.Util.(member "storage" json |> to_string))
-        json
-      |> Result.get_ok
-    in
 
     let hash = Hash.make source in
     let filename_ligo = Printf.sprintf "%s.%s" hash lang in
     let filename_tz = Printf.sprintf "%s.tz" hash in
-    let filename_wasm = Printf.sprintf "%s.wat" hash in
     let ligo_path = Eio.Path.(Eio.Stdenv.cwd env / filename_ligo) in
     let tz_path = Eio.Path.(Eio.Stdenv.cwd env / filename_tz) in
-    let wasm_path = Eio.Path.(Eio.Stdenv.cwd env / filename_wasm) in
     let tz_already_exists =
       try Some (Eio.Path.load tz_path) |> Option.is_some with _ -> false
     in
 
-    let wasm =
+    let tz =
       match tz_already_exists with
       | false ->
           let () =
@@ -78,19 +53,17 @@ let to_wasm ~env () =
             with _ -> ()
           in
           let () = ligo_to_tz ~env ~lang ~filename_ligo ~filename_tz () in
-          let () = tz_to_wasm ~env ~storage ~filename_tz ~filename_wasm () in
-          let wasm = Eio.Path.load wasm_path in
-          Eio.Path.unlink wasm_path;
-          wasm
+          let tz = Eio.Path.load tz_path in
+          tz
       | true ->
-          let () = tz_to_wasm ~env ~storage ~filename_tz ~filename_wasm () in
-          let wasm = Eio.Path.load wasm_path in
-          Eio.Path.unlink wasm_path;
-          wasm
+          let tz = Eio.Path.load tz_path in
+          tz
     in
 
-    let body = Ok (Piaf.Body.of_string wasm) in
-
+    let body =
+      `Assoc [ ("code", `String tz) ]
+      |> Yojson.Safe.to_string |> Piaf.Body.of_string |> Result.ok
+    in
     match body with
     | Ok body -> Piaf.Response.create ~body `OK
     | Error e ->
