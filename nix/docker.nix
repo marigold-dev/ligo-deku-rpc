@@ -13,7 +13,7 @@ nix2containerPkgs.nix2container.buildImage rec {
     name = "image-root";
     paths = [
       tunac
-      ligoLight 
+      ligoLight
       pkgs.coreutils
       pkgs.dockerTools.fakeNss
       pkgs.bash

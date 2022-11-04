@@ -112,18 +112,7 @@
           tuna.packages.${system}.tuna
           ligo.packages.${system}.ligoLight
         ];
-        propagatedBuildInputs = with pkgs.ocamlPackages; [
-          findlib
-          eio_main
-          eio
-          eio_linux
-          piaf
-          routes
-          logs
-          fmt
-          yojson
-          mirage-crypto
-        ];
+        inputsFrom = [self.packages."${system}".default];
       };
     });
 }
