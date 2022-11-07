@@ -24,12 +24,12 @@ nix2containerPkgs.nix2container.buildImage rec {
 
   config = {
     Entrypoint = ["${ligo-deku-rpc}/bin/ligo-deku-rpc"];
-    Cmd = ["-p" "8080"];
+    Cmd = ["-p" "9090"];
     author = "Ulrik Strid";
     architecture = "amd64";
     os = "linux";
     ExposedPorts = {
-      "8080/tcp" = {};
+      "9090/tcp" = {};
     };
 
     Env = [
