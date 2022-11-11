@@ -28,7 +28,7 @@ let compile_parameter ~lang ~filename_ligo ~expression () =
   in
   In_channel.input_all stdout
 
-let source_to_wasm ~env () =
+let source_to_tz ~env () =
   let handler { Server.ctx = _; request } =
     let json =
       request.body |> Body.to_string |> Result.map Yojson.Safe.from_string
@@ -83,7 +83,7 @@ let source_to_wasm ~env () =
   in
   Routes.((s "api" / s "v1" / s "ligo" / s "originate" /? nil) @--> handler)
 
-let expression_to_wasm () =
+let expression_to_tz () =
   let handler { Server.ctx = _; request } =
     let json =
       request.body |> Body.to_string |> Result.map Yojson.Safe.from_string
@@ -128,4 +128,4 @@ let healthz () =
   let handler _ = Piaf.Response.create ~body:(Piaf.Body.of_string "ok") `OK in
   Routes.((s "health" /? nil) @--> handler)
 
-let router ~env () = Routes.one_of [ source_to_wasm ~env (); healthz () ; expression_to_wasm () ]
+let router ~env () = Routes.one_of [ source_to_tz ~env (); healthz () ; expression_to_tz () ]
